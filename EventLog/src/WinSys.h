@@ -22,8 +22,8 @@
 
 #pragma once
 
-#ifndef TSI_INCLUDED_WINDOWS_H
-#define TSI_INCLUDED_WINDOWS_H
+#ifndef INCLUDED_WINDOWS_H
+#define INCLUDED_WINDOWS_H
 #include <Windows.h>
 #endif 
 

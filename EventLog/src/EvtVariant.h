@@ -22,13 +22,13 @@
 
 #pragma once
 
-#ifndef TSI_INCLUDED_WINDOWS_H
-#define TSI_INCLUDED_WINDOWS_H
+#ifndef INCLUDED_WINDOWS_H
+#define INCLUDED_WINDOWS_H
 #include <Windows.h>
 #endif 
 
-#ifndef TSI_INCLUDED_WINEVT_H
-#define TSI_INCLUDED_WINEVT_H
+#ifndef INCLUDED_WINEVT_H
+#define INCLUDED_WINEVT_H
 #include <winevt.h>
 #endif
 
