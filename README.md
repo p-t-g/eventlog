@@ -1,4 +1,4 @@
-﻿# EventLog
+# EventLog
 EventLog is a C++ library wrapper around the Windows Event Log API for 
 consumers. 
 
@@ -26,9 +26,15 @@ followed by `cmake --build .`
 
 # TODO
 There are many things to do:
-- Find and fix bugs; it's early days.
+- Find and fix bugs 
+- Code Design
+	- Low-level exception type for Windows API return codes
+	  can escape. Need to tidy this up.
+- Features: 
+	- Remote sessions.
 - Documentation
-- Clean-up the build output and collect it in a convenient location.
-- Remote sessions.
+- Build enhancements:
+	- install
+	- ci build for g++ 
 - Better command line option handling in EventLogCtl
 - ncurses or tvision (or similar) text client for viewing events.
