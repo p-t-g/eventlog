@@ -63,7 +63,7 @@ public:
 	{
 		if (!mRenderCtx)
 		{
-			THROW_(SystemError, ::GetLastError());
+			THROW_(SystemException, ::GetLastError());
 		}
 	}
 
@@ -174,12 +174,12 @@ EventRecord::EventRecord(const EventRecordHandle &hRecord)
 			if (!success)
 			{
 				err = ::GetLastError();
-				THROW_(SystemError, err);
+				THROW_(SystemException, err);
 			}
 		}
 		else
 		{
-			THROW_(SystemError, err);
+			THROW_(SystemException, err);
 		}
 	}
 

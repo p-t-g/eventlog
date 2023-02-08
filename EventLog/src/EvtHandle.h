@@ -373,8 +373,8 @@ public:
 		return a.mHandle != b.mHandle;
 	}
 
-	SysErr formatMessage(uint32_t messageID, uint32_t bufferSize, wchar_t * buffer, uint32_t *bufferUsed) const;
-	SysErr formatMessage(EVT_HANDLE hEvent, uint32_t messageID, uint32_t flags, uint32_t bufferSize, wchar_t *buffer, uint32_t *bufferUsed) const;
+	DWORD formatMessage(uint32_t messageID, uint32_t bufferSize, wchar_t * buffer, uint32_t *bufferUsed) const;
+	DWORD formatMessage(EVT_HANDLE hEvent, uint32_t messageID, uint32_t flags, uint32_t bufferSize, wchar_t *buffer, uint32_t *bufferUsed) const;
 
 private:
 	constexpr explicit PublisherMetadataHandle(EVT_HANDLE h) noexcept : mHandle{h} {}

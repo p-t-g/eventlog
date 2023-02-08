@@ -43,7 +43,7 @@ std::string to_utf8(const wchar_t * wsz)
 	HRESULT hr = StringCchLengthW(wsz, STRSAFE_MAX_CCH, &length);
 	if (FAILED(hr))
 	{
-		THROW_(Windows::HResultError, hr);
+		THROW_(SystemException, hr);
 	}
 
 	return to_utf8(wsz, length);
@@ -64,12 +64,12 @@ std::string to_utf8(const wchar_t *wsz, size_t length)
 		requiredLength = ::WideCharToMultiByte(CP_UTF8, 0, wsz, int(length), &u[0], int(requiredLength), nullptr, nullptr);
 		if (requiredLength == 0)
 		{
-			THROW_(Windows::SystemError, ::GetLastError());
+			THROW_(SystemException, ::GetLastError());
 		}
 	}
 	else
 	{
-		THROW_(Windows::SystemError, ::GetLastError());
+		THROW_(SystemException, ::GetLastError());
 	}
 
 	return u;
@@ -89,12 +89,12 @@ std::wstring to_utf16(const char *sz, size_t length)
 		n = ::MultiByteToWideChar(CP_UTF8, 0, sz, int(length), &ws[0], int(length));
 		if (n == 0)
 		{
-			THROW_(Windows::SystemError, ::GetLastError());
+			THROW_(SystemException, ::GetLastError());
 		}
 	}
 	else
 	{
-		THROW_(Windows::SystemError, ::GetLastError());
+		THROW_(SystemException, ::GetLastError());
 	}
 	return ws;
 }
@@ -108,7 +108,7 @@ std::wstring to_utf16(const char *sz)
 	HRESULT hr = StringCchLengthA(sz, STRSAFE_MAX_CCH, &length);
 	if (FAILED(hr))
 	{
-		THROW_(Windows::HResultError, hr);
+		THROW_(SystemException, hr);
 	}
 	return to_utf16(sz, length);
 }
@@ -117,67 +117,5 @@ std::wstring to_utf16(const std::string &s)
 {
 	return to_utf16(s.c_str(), s.length());
 }
-
-#if 0
-namespace EventLog
-{
-
-std::string to_string(ChannelIsolation isolation)
-{
-	switch (isolation)
-	{
-	case ChannelIsolation::Application:
-		return "Application";
-	case ChannelIsolation::System:
-		return "System";
-	case ChannelIsolation::Custom:
-		return "Custom";
-	}
-	return "";
-}
-
-std::string to_string(ChannelType type)
-{
-	switch (type)
-	{
-	case ChannelType::Admin:
-		return "Admin";
-	case ChannelType::Operational:
-		return "Operational";
-	case ChannelType::Analytic:
-		return "Analytic";
-	case ChannelType::Debug:
-		return "Debug";
-	}
-	return "";
-}
-
-std::string to_string(ChannelClockType clockType)
-{
-	switch (clockType)
-	{
-	case ChannelClockType::SystemTime:
-		return "SystemTime";
-	case ChannelClockType::QPC:
-		return "QPC";
-	}
-	return "";
-}
-
-std::string to_string(ChannelSIDType sidType)
-{
-	switch (sidType)
-	{
-	case ChannelSIDType::None:
-		return "None";
-	case ChannelSIDType::Publishing:
-		return "Publishing";
-	}
-	return "";
-}
-
-} // namespace EventLog
-
-#endif
 
 } // namespace Windows

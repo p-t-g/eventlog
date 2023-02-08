@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "Exception.h"
+#include "Exceptions.h"
 
 #include <memory>
 
@@ -30,7 +30,23 @@ namespace Windows
 {
 
 class ArrayIndexOutOfBoundsError : public Exception
-{};
+{
+public:
+	ArrayIndexOutOfBoundsError() = default;
+	
+	ArrayIndexOutOfBoundsError(const char *file, int line)
+		: Exception(file, line)
+	{}
+
+	ArrayIndexOutOfBoundsError(const ArrayIndexOutOfBoundsError &) = default;
+
+	~ArrayIndexOutOfBoundsError() = default;
+
+private:
+
+	// Nope.
+	ArrayIndexOutOfBoundsError &operator=(const ArrayIndexOutOfBoundsError &) = delete;
+};
 
 struct NoOp_t
 { 
@@ -38,20 +54,16 @@ struct NoOp_t
 	constexpr void operator()(Args&&...) const {} 
 };
 
-// Generic heap allocated array that is easy to use with C APIs accepting array
-// parameters, which std::vector<> often is not. Not intended as a generic 
-// collection. Use std::vector for that.
+// Fixed sized heap allocated array.
 // \tparam T
 // Element type. Must be default constructible at a minimum. 
 // \tparam Destroyer
-// Functor the accepts T param to destroy it. e.g. to close a handle.
-// Applied to every element when the array is destroyed.
-// TODO: Parameterize memory management.
-//        
+// Functor the accepts T & argument to destroy it. Applied to every element 
+// when the array is destroyed.       
 template<typename T, typename Destroyer = NoOp_t>
 class Array
 {
-	uint32_t mSize;
+	size_t mSize;
 	std::unique_ptr<T[]> mElements;
 public:
 
@@ -63,19 +75,18 @@ public:
 	// constexpr Array(DWORD, T*)
 	// The we need make_array<T, F>(DWORD, F alloc) {  }
 	// 
-	explicit Array(uint32_t size)
+	explicit Array(size_t size)
 		: mSize(size)
 		, mElements(std::make_unique<T[]>(size))
 	{		
 	}
 
-	Array(uint32_t size, std::unique_ptr<T[]> a) noexcept
+	Array(size_t size, std::unique_ptr<T[]> a) noexcept
 		: mSize(size), mElements(std::move(a))
 	{
 	}
 
-	// Move constructor. On return, the movee is empty and can be 
-	// reused (e.g. as target of move).
+	// Move constructor. On return, the movee is empty and can be reused.
 	// \param [in] rhs
 	Array(Array &&rhs) noexcept
 		: mSize(rhs.mSize)
@@ -84,8 +95,7 @@ public:
 		rhs.mElements = 0;
 	}
 
-	// Move assignment. On return, the movee is empty and can be 
-	// reused (e.g. as target of move).
+	// Move assignment. On return, the movee is empty and can be reused.
 	// \param [in] rhs
 	Array &operator=(Array &&rhs) noexcept
 	{
@@ -102,13 +112,15 @@ public:
 
 	T &operator[](size_t index)
 	{
-		if (index >= mSize) throw ArrayIndexOutOfBoundsError();
+		if (index >= mSize) 
+			THROW(ArrayIndexOutOfBoundsError);
 		return mElements[index];
 	}
 
 	const T &operator[](size_t index) const
 	{
-		if (index >= mSize) throw ArrayIndexOutOfBoundsError();
+		if (index >= mSize) 
+			THROW(ArrayIndexOutOfBoundsError);
 		return mElements[index];
 	}
 
@@ -127,13 +139,6 @@ public:
 		return mElements.get();
 	}
 
-	// Destroys and default constructs each element.
-	// Does not change the size. 
-	void sweep()
-	{
-		sweepElements();
-	}
-
 private:
 
 	template<typename U = Destroyer>
@@ -148,32 +153,12 @@ private:
 		}
 	}
 
-	template<typename U = Destroyer>
-	void sweepElements(std::enable_if_t< std::negation_v< std::is_same<U, NoOp_t> > > * = nullptr)
-	{
-		if (!mElements) 
-			return;
-		Destroyer destroy{};
-		for (uint32_t i = 0; i < mSize; ++i)
-		{
-			destroy(mElements[i]);
-			new (&mElements[i]) T{};
-		}
-	}
-
 	template<typename U = Destroyer >
 	void destroyElements(std::enable_if_t< std::is_same_v<U, NoOp_t> > * = nullptr)
 	{
 		// Nothing.
 	}
 
-	template<typename U = Destroyer >
-	void sweepElements(std::enable_if_t< std::is_same_v<U, NoOp_t> > * = nullptr)
-	{
-		// Nothing.
-	}
-
-	// TODO: We could support copy, even if we don't need it ATM ...
 	Array(const Array &) = delete;
 	Array &operator=(const Array &) = delete;
 };

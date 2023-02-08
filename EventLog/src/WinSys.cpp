@@ -52,7 +52,7 @@ struct FormatMessageBuffer
 	}
 };
 
-std::string SysErr::formatMessage() const 
+std::string formatMessage(uint32_t errorCode) 
 {
 	std::string m;
 
@@ -62,8 +62,8 @@ std::string SysErr::formatMessage() const
 		FORMAT_MESSAGE_FROM_SYSTEM | 
 		FORMAT_MESSAGE_IGNORE_INSERTS,
 		nullptr,
-		mErr,
-		0,
+		DWORD(errorCode),
+		0, // Use the built-in algorithm for matching language
 		&buf,
 		0, 
 		nullptr);
@@ -80,7 +80,7 @@ Guid::Guid(const wchar_t *wsz)
 	HRESULT hr = ::CLSIDFromString(wsz, &value);
 	if (FAILED(hr))
 	{
-		THROW_(HResultError, hr);
+		THROW_(SystemException, hr);
 	}
 }
 
@@ -149,7 +149,7 @@ std::string Guid::to_string() const
 	HRESULT hr = ::StringFromCLSID(value, &buf);
 	if (FAILED(hr))
 	{
-		THROW_(HResultError, hr);
+		THROW_(SystemException, hr);
 	}
 
 	s = to_utf8(buf);
@@ -211,7 +211,7 @@ std::string SystemTime::format(const SYSTEMTIME &st)
 	if (dateSize == 0)
 	{
 		err = ::GetLastError();
-		THROW_(SystemError, err);
+		THROW_(SystemException, err);
 	}
 
 	totalSize += dateSize;
@@ -220,7 +220,7 @@ std::string SystemTime::format(const SYSTEMTIME &st)
 	if (timeSize == 0)
 	{
 		err = ::GetLastError();
-		THROW_(SystemError, err);
+		THROW_(SystemException, err);
 	}
 
 	totalSize += timeSize;
@@ -231,7 +231,7 @@ std::string SystemTime::format(const SYSTEMTIME &st)
 	if (n == 0)
 	{
 		err = ::GetLastError();
-		THROW_(SystemError, err);
+		THROW_(SystemException, err);
 	}
 
 	buf[size_t(dateSize) - 1] = L' ';
@@ -239,7 +239,7 @@ std::string SystemTime::format(const SYSTEMTIME &st)
 	if (n == 0)
 	{
 		err = ::GetLastError();
-		THROW_(SystemError, err);
+		THROW_(SystemException, err);
 	}
 
 	return to_utf8(buf.get());
@@ -257,7 +257,7 @@ std::string to_string(const SYSTEMTIME &st)
 	int result = ::GetTimeFormatEx(LOCALE_NAME_USER_DEFAULT, 0, &st, nullptr, buffer.get(), 64);
 	if (result == 0)
 	{
-		THROW_(SystemError, ::GetLastError());
+		THROW_(SystemException, ::GetLastError());
 	}
 
 	return to_utf8(buffer.get());
@@ -293,7 +293,7 @@ WaitResult WaitResult::make(DWORD status)
 // Unconditionally throw a SystemError with the contained error code.
 [[noreturn]] void WaitResult::throwError() 
 {
-	THROW_(SystemError, mLastErr.getCode());
+	THROW_(SystemException, mLastErr.getCode());
 }
 
 WaitResult WaitableHandle::wait(HANDLE h, DWORD timeout, BOOL alertable) noexcept
@@ -322,7 +322,7 @@ HANDLE ObjectHandle::duplicate(HANDLE hSourceProcess, HANDLE hSourceHandle,
 	if (!success)
 	{
 		DWORD err = ::GetLastError();
-		THROW_(SystemError, err);
+		THROW_(SystemException, err);
 	}
 	return hResultHandle;
 }
@@ -411,33 +411,10 @@ Thread Thread::begin(unsigned(__stdcall *pfn)(void *), void *arg)
 	HANDLE hThread = beginThreadEx(nullptr, 0, pfn, arg, 0, &tid);
 	if (!hThread)
 	{
-		THROW_(SystemError, static_cast<DWORD>(_doserrno));
+		THROW_(SystemException, static_cast<DWORD>(_doserrno));
 	}
 	return Thread(hThread, static_cast<DWORD>(tid));
 }
-
-#if 0
-Thread Thread::begin(RefPtr<IRunnable> runnable)
-{
-
-	unsigned tid = 0;
-	HANDLE hThread = beginThreadEx(
-		nullptr,
-		0,
-		&Thread::objectMain_Runnable,
-		runnable,
-		0,
-		&tid);
-	if (!hThread)
-	{
-		// _beginthreadex report GLE in _doserrno. Of course MSFT wasn't
-		// careful about signed/unsigned conversion, fortunately it doesn't 
-		// matter too much with an error code.
-		THROW_(SystemError, static_cast<DWORD>(_doserrno));
-	}
-	return Thread(hThread, static_cast<DWORD>(tid));
-}
-#endif
 
 // Create an independent thread object representing the same thread as *this.
 Thread Thread::duplicate() const
@@ -464,7 +441,7 @@ HANDLE Semaphore::create(LONG initial, LONG max, LPCWSTR name)
 	HANDLE hSemaphore = ::CreateSemaphoreW(nullptr, initial, max, name);
 	if (!hSemaphore)
 	{
-		THROW_(SystemError, ::GetLastError());
+		THROW_(SystemException, ::GetLastError());
 	}
 	return hSemaphore;
 }
@@ -533,7 +510,7 @@ HANDLE Event::create(BOOL bManualReset, BOOL bInitialState, LPCWSTR name)
 	if (!hEvent)
 	{
 		DWORD err = ::GetLastError();
-		THROW_(SystemError, err);
+		THROW_(SystemException, err);
 	}
 	return hEvent;
 }
@@ -544,7 +521,7 @@ HANDLE Event::create(BOOL bManualReset, BOOL bInitialState, LPCSTR name)
 	if (!hEvent)
 	{
 		DWORD err = ::GetLastError();
-		THROW_(SystemError, err);
+		THROW_(SystemException, err);
 	}
 	return hEvent;
 }
@@ -563,7 +540,7 @@ void Event::reset()
 	if (!success)
 	{
 		DWORD err = ::GetLastError();
-		THROW_(SystemError, err);
+		THROW_(SystemException, err);
 	}
 }
 
@@ -573,7 +550,7 @@ void Event::set()
 	if (!success)
 	{
 		DWORD err = ::GetLastError();
-		THROW_(SystemError, err);
+		THROW_(SystemException, err);
 	}
 }
 
@@ -678,7 +655,7 @@ std::string lookupAccount(PSID pSid)
 			else
 			{
 				err = ::GetLastError();
-				THROW_(SystemError, err);
+				THROW_(SystemException, err);
 			}
 		}
 	}

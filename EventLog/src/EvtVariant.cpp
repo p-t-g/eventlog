@@ -149,7 +149,7 @@ EvtVariantPtr allocStringVariant(const std::string &s)
 		if (err == ERROR_OUTOFMEMORY)
 			throw std::bad_alloc();
 		else
-			THROW_(SystemError, err);
+			THROW_(SystemException, err);
 	}
 	return EvtVariantPtr{pv};
 }

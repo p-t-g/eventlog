@@ -140,7 +140,7 @@ ChannelEnumHandle ChannelEnumHandle::open()
 	auto hChannelEnum = ::EvtOpenChannelEnum(nullptr, 0);
 	if (!hChannelEnum)
 	{
-		THROW_(SystemError, ::GetLastError());
+		THROW_(SystemException, ::GetLastError());
 	}
 	return ChannelEnumHandle(hChannelEnum);
 }
@@ -173,13 +173,13 @@ std::optional<std::wstring> ChannelEnumHandle::nextChannelPath(const UseWideChar
 			}
 			else
 			{
-				THROW_(SystemError, ::GetLastError());
+				THROW_(SystemException, ::GetLastError());
 			}
 			break;
 		case ERROR_NO_MORE_ITEMS:
 			return {};
 		default:
-			THROW_(SystemError, err);
+			THROW_(SystemException, err);
 		}
 	}
 }
@@ -201,7 +201,7 @@ ChannelConfigHandle ChannelConfigHandle::open(const std::string &channelPath)
 	auto hChannelConfig = ::EvtOpenChannelConfig(nullptr, to_utf16(channelPath).c_str(), 0);
 	if (!hChannelConfig)
 	{
-		THROW_(SystemError, ::GetLastError());
+		THROW_(SystemException, ::GetLastError());
 	}
 
 	return ChannelConfigHandle(hChannelConfig);
@@ -212,7 +212,7 @@ void ChannelConfigHandle::setPropertyValue(EVT_CHANNEL_CONFIG_PROPERTY_ID Id, PE
 	BOOL success = ::EvtSetChannelConfigProperty(handle(), Id, 0, pv);
 	if (!success)
 	{
-		THROW_(SystemError, ::GetLastError());
+		THROW_(SystemException, ::GetLastError());
 	}
 }
 
@@ -222,7 +222,7 @@ void ChannelConfigHandle::getPropertyValue(EVT_CHANNEL_CONFIG_PROPERTY_ID Id, PE
 	BOOL success = ::EvtGetChannelConfigProperty(handle(), Id, 0, byteSize, pv, &byteSize);
 	if (!success)
 	{
-		THROW_(SystemError, ::GetLastError());
+		THROW_(SystemException, ::GetLastError());
 	}
 }
 
@@ -251,7 +251,7 @@ EvtVariantPtr ChannelConfigHandle::getPropertyValue(EVT_CHANNEL_CONFIG_PROPERTY_
 			}
 			else
 			{
-				THROW_(SystemError, ::GetLastError());
+				THROW_(SystemException, ::GetLastError());
 			}
 		}
 	}
@@ -263,7 +263,7 @@ void ChannelConfigHandle::save() const
 	BOOL success = ::EvtSaveChannelConfig(handle(), 0);
 	if (!success)
 	{
-		THROW_(SystemError, ::GetLastError());
+		THROW_(SystemException, ::GetLastError());
 	}
 }
 
@@ -276,7 +276,7 @@ PublisherEnumHandle PublisherEnumHandle::open()
 	auto hPublisherEnum = ::EvtOpenPublisherEnum(nullptr, 0);
 	if (!hPublisherEnum)
 	{
-		THROW_(SystemError, ::GetLastError());
+		THROW_(SystemException, ::GetLastError());
 	}
 	return PublisherEnumHandle(hPublisherEnum);
 }
@@ -307,14 +307,14 @@ std::optional<std::wstring> PublisherEnumHandle::nextPublisherId(int) const
 			}
 			else
 			{
-				THROW_(SystemError, ::GetLastError());
+				THROW_(SystemException, ::GetLastError());
 			}
 
 		}
 		case ERROR_NO_MORE_ITEMS:
 			return {};
 		default:
-			THROW_(SystemError, err);
+			THROW_(SystemException, err);
 		}
 	}
 }
@@ -338,7 +338,7 @@ PublisherMetadataHandle PublisherMetadataHandle::openProvider(const std::string 
 	if (!hPublisherMetadata)
 	{
 		DWORD err = ::GetLastError();
-		THROW_(SystemError, err);
+		THROW_(SystemException, err);
 	}
 
 	return PublisherMetadataHandle(hPublisherMetadata);
@@ -350,7 +350,7 @@ PublisherMetadataHandle PublisherMetadataHandle::openArchiveFile(const std::stri
 		to_utf16(logFilePath).c_str(), 0, 0);
 	if (!hPublisherMetadata)
 	{
-		THROW_(SystemError, ::GetLastError());
+		THROW_(SystemException, ::GetLastError());
 	}
 
 	return PublisherMetadataHandle(hPublisherMetadata);
@@ -364,7 +364,7 @@ void PublisherMetadataHandle::getProperty(EVT_PUBLISHER_METADATA_PROPERTY_ID pro
 	if (!success)
 	{
 		DWORD err = ::GetLastError();
-		THROW_(SystemError, err);
+		THROW_(SystemException, err);
 	}
 }
 
@@ -394,12 +394,12 @@ EvtVariantPtr PublisherMetadataHandle::getProperty(EVT_PUBLISHER_METADATA_PROPER
 			}
 			else
 			{
-				THROW_(SystemError, ::GetLastError());
+				THROW_(SystemException, ::GetLastError());
 			}
 		}
 		else
 		{
-			THROW_(SystemError, ::GetLastError());
+			THROW_(SystemException, ::GetLastError());
 		}
 	}
 	return pVal;
@@ -410,12 +410,12 @@ EventMetadataEnumHandle PublisherMetadataHandle::openEventMetadataEnum() const
 	EVT_HANDLE h = ::EvtOpenEventMetadataEnum(mHandle.handle(), 0);
 	if (!h)
 	{
-		THROW_(SystemError, ::GetLastError());
+		THROW_(SystemException, ::GetLastError());
 	}
 	return EventMetadataEnumHandle(h);
 }
 
-SysErr PublisherMetadataHandle::formatMessage(uint32_t messageID, uint32_t bufferSize, wchar_t *buffer, uint32_t *bufferUsed) const
+DWORD PublisherMetadataHandle::formatMessage(uint32_t messageID, uint32_t bufferSize, wchar_t *buffer, uint32_t *bufferUsed) const
 {
 	DWORD err = ERROR_SUCCESS;
 	EVT_HANDLE hMetadata = this->mHandle.handle();
@@ -429,7 +429,7 @@ SysErr PublisherMetadataHandle::formatMessage(uint32_t messageID, uint32_t buffe
 	return err;
 }
 
-SysErr PublisherMetadataHandle::formatMessage(EVT_HANDLE hEvent, uint32_t messageID, uint32_t flags, uint32_t bufferSize,
+DWORD PublisherMetadataHandle::formatMessage(EVT_HANDLE hEvent, uint32_t messageID, uint32_t flags, uint32_t bufferSize,
 	wchar_t *buffer, uint32_t *bufferUsed) const
 {
 	DWORD err = ERROR_SUCCESS;
@@ -508,7 +508,7 @@ void ObjectArrayPropertyHandle::getProperty(uint32_t propertyId, uint32_t index,
 	if (!success)
 	{
 		DWORD err = ::GetLastError();
-		THROW_(SystemError, err);
+		THROW_(SystemException, err);
 	}
 }
 
@@ -535,12 +535,12 @@ EvtVariantPtr ObjectArrayPropertyHandle::getProperty(uint32_t propertyId, uint32
 			}
 			else
 			{
-				THROW_(SystemError, ::GetLastError());
+				THROW_(SystemException, ::GetLastError());
 			}
 		}
 		else
 		{
-			THROW_(SystemError, err);
+			THROW_(SystemException, err);
 		}
 	}
 	return pv;
@@ -560,7 +560,7 @@ uint32_t ObjectArrayPropertyHandle::getSize() const
 		{
 			return 0;
 		}
-		THROW_(SystemError, err);
+		THROW_(SystemException, err);
 	}
 	return size;
 }
@@ -590,7 +590,7 @@ LogHandle LogHandle::openChannel(const std::string &channelPath)
 	auto hLog = ::EvtOpenLog(nullptr, to_utf16(channelPath).c_str(), EvtOpenChannelPath);
 	if (!hLog)
 	{
-		THROW_(SystemError, ::GetLastError());
+		THROW_(SystemException, ::GetLastError());
 	}
 	return LogHandle(hLog);
 }
@@ -600,7 +600,7 @@ LogHandle LogHandle::openFile(const std::string &filePath)
 	auto hLog = ::EvtOpenLog(nullptr, to_utf16(filePath).c_str(), EvtOpenFilePath);
 	if (!hLog)
 	{
-		THROW_(SystemError, ::GetLastError());
+		THROW_(SystemException, ::GetLastError());
 	}
 	return LogHandle(hLog);
 }
@@ -611,7 +611,7 @@ void LogHandle::getProperty(EVT_LOG_PROPERTY_ID propertyId, EVT_VARIANT &v) cons
 	BOOL success = ::EvtGetLogInfo(mHandle.handle(), propertyId, size, &v, &size);
 	if (!success)
 	{
-		THROW_(SystemError, ::GetLastError());
+		THROW_(SystemException, ::GetLastError());
 	}
 }
 
@@ -625,7 +625,7 @@ QueryHandle QueryHandle::query(const wchar_t *channel, const wchar_t *queryText,
 	if (!h)
 	{
 		DWORD err = ::GetLastError();
-		THROW_(SystemError, err);
+		THROW_(SystemException, err);
 	}
 
 	return QueryHandle(h);
@@ -645,7 +645,7 @@ QueryNextStatus QueryHandle::next(uint32_t eventSize, EVT_HANDLE *events, uint32
 		case ERROR_TIMEOUT:
 			return QueryNextStatus::Timeout;
 		default:
-			THROW_(SystemError, err);
+			THROW_(SystemException, err);
 		}				
 	}
 	*numberReturned = count;
@@ -675,7 +675,7 @@ void QueryHandle::seek(int64_t position, SeekOption whence)
 	if (!success)
 	{
 		DWORD err = ::GetLastError();
-		THROW_(SystemError, err);
+		THROW_(SystemException, err);
 	}
 }
 
@@ -691,7 +691,7 @@ void EventMetadataHandle::getProperty(EVT_EVENT_METADATA_PROPERTY_ID propertyId,
 	if (!success)
 	{
 		DWORD err = ::GetLastError();
-		THROW_(SystemError, err);
+		THROW_(SystemException, err);
 	}
 }
 
@@ -709,12 +709,12 @@ EvtVariantPtr EventMetadataHandle::getProperty(EVT_EVENT_METADATA_PROPERTY_ID pr
 			if (!success)
 			{
 				err = ::GetLastError();
-				THROW_(SystemError, err);
+				THROW_(SystemException, err);
 			}
 		}
 		else
 		{
-			THROW_(SystemError, err);
+			THROW_(SystemException, err);
 		}
 	}
 
@@ -738,7 +738,7 @@ EventMetadataHandle EventMetadataEnumHandle::next() const
 		}
 		else
 		{
-			THROW_(SystemError, err);
+			THROW_(SystemException, err);
 		}
 	}
 	return EventMetadataHandle(hEventMetadata);

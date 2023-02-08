@@ -20,39 +20,35 @@ misrepresented as being the original software.
 3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "Exception.h"
+#include "Exceptions.h"
+#include "WinSys.h"
 
 namespace Windows
 {
 
-const char *Exception::getThrowFile() const
-{
-	return mFile;
-}
-
-int Exception::getThrowLine() const
-{
-	return mLine;
-}
-
-Exception::Exception(const char *file, int line) noexcept
+Exception::Exception(const char *const file, int line) noexcept
 	: mFile(file), mLine(line)
 {}
 
-InvalidStateException::InvalidStateException(const char *file, int line)
+InvalidStateException::InvalidStateException(const char * const file, int line)
 	: Exception(file, line)
 {}
 
-InvalidArgumentException::InvalidArgumentException(const char *file, int line)
+InvalidArgumentException::InvalidArgumentException(const char *const file, int line)
 	: Exception(file, line)
 {}
 
-IndexOutOfBoundsException::IndexOutOfBoundsException(const char *file, int line)
+IndexOutOfBoundsException::IndexOutOfBoundsException(const char *const file, int line)
 	: Exception(file, line)
 {}
 
-InvalidDataTypeException::InvalidDataTypeException(const char *file, int line)
+InvalidDataTypeException::InvalidDataTypeException(const char *const file, int line)
 	: Exception(file, line)
 {}
 
+std::string SystemException::formatMessage() const
+{
+	return Windows::formatMessage(mErrorCode);
 }
+
+} // namespace Windows

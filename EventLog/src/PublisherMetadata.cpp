@@ -24,7 +24,7 @@ misrepresented as being the original software.
 
 #include "EvtHandle.h"
 #include "EvtVariant.h"
-#include "Exception.h"
+#include "Exceptions.h"
 #include "PublisherMetadataImpl.h"
 #include "StringUtils.h"
 
@@ -76,7 +76,7 @@ static std::unique_ptr<wchar_t[]> formatMessage(EVT_HANDLE hP, EVT_HANDLE hE, ui
 			if (!success)
 			{
 				err = ::GetLastError();
-				THROW_(SystemError, err);
+				THROW_(SystemException, err);
 			}
 		}
 		else
@@ -88,7 +88,7 @@ static std::unique_ptr<wchar_t[]> formatMessage(EVT_HANDLE hP, EVT_HANDLE hE, ui
 			}
 			else
 			{ 
-				THROW_(SystemError, err);
+				THROW_(SystemException, err);
 			}
 		}
 	}
@@ -168,7 +168,7 @@ std::string formatMessage(const PublisherMetadataHandle &hMetadata, uint32_t mes
 	std::unique_ptr<wchar_t[]> buffer(std::make_unique<wchar_t[]>(size));
 	std::string msg;
 
-	SysErr err = hMetadata.formatMessage(messageID, size, buffer.get(), &size);
+	DWORD err = hMetadata.formatMessage(messageID, size, buffer.get(), &size);
 	if (!err)
 	{
 		msg = to_utf8(buffer.get());
@@ -187,17 +187,17 @@ std::string formatMessage(const PublisherMetadataHandle &hMetadata, uint32_t mes
 			}
 			else
 			{
-				if (!isIgnoredFormatMessageError(err.getCode()))
+				if (!isIgnoredFormatMessageError(err))
 				{
-					THROW_(SystemError, err);
+					THROW_(SystemException, err);
 				}
 			}
 		}
 		else
 		{ 
-			if (!isIgnoredFormatMessageError(err.getCode()))
+			if (!isIgnoredFormatMessageError(err))
 			{
-				THROW_(SystemError, err);
+				THROW_(SystemException, err);
 			}
 		}
 	}
@@ -1738,7 +1738,7 @@ std::string PublisherMetadata::formatMessage(uint32_t messageID) const
 	std::unique_ptr<wchar_t[]> buffer(std::make_unique<wchar_t[]>(size));
 	std::string msg;
 
-	SysErr err = d_ptr->mPublisherMetadataHandle.formatMessage(messageID, size, buffer.get(), &size);
+	DWORD err = d_ptr->mPublisherMetadataHandle.formatMessage(messageID, size, buffer.get(), &size);
 	if (!err)
 	{
 		msg = to_utf8(buffer.get());
@@ -1757,17 +1757,17 @@ std::string PublisherMetadata::formatMessage(uint32_t messageID) const
 			}
 			else
 			{
-				if (!isIgnoredFormatMessageError(err.getCode()))
+				if (!isIgnoredFormatMessageError(err))
 				{
-					THROW_(SystemError, err);
+					THROW_(SystemException, err);
 				}
 			}
 		}
 		else
 		{ 
-			if (!isIgnoredFormatMessageError(err.getCode()))
+			if (!isIgnoredFormatMessageError(err))
 			{
-				THROW_(SystemError, err);
+				THROW_(SystemException, err);
 			}
 		}
 	}

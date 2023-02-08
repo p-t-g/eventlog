@@ -33,7 +33,7 @@
 
 #include <process.h>
 
-#include "Exception.h"
+#include "Exceptions.h"
 #include "RefObject.h"
 
 
@@ -96,14 +96,12 @@ public:
 	static SysErr getLast() { return SysErr(::GetLastError()); }
 
 	SysErr() = default;
+	SysErr(const SysErr &rhs) = default;
+	SysErr &operator=(const SysErr &rhs) = default;
 
 	constexpr SysErr(DWORD err) noexcept
 		: mErr(err)
 	{}
-
-	SysErr(const SysErr &rhs) = default;
-
-	SysErr &operator=(const SysErr &rhs) = default;
 
 	SysErr &operator=(DWORD code) noexcept
 	{
@@ -131,8 +129,6 @@ public:
 		return failed();
 	}
 
-	std::string formatMessage() const;
-
 private:
 	DWORD mErr;
 };
@@ -143,60 +139,6 @@ inline bool operator==(const SysErr &lhs, DWORD rhs) { return lhs.getCode() == r
 inline bool operator!=(const SysErr &lhs, DWORD rhs) { return lhs.getCode() != rhs; }
 inline bool operator==(DWORD lhs, const SysErr &rhs) { return lhs == rhs.getCode(); }
 inline bool operator!=(DWORD lhs, const SysErr &rhs) { return lhs != rhs.getCode(); }
-
-class SystemError : public Exception
-{
-	SysErr mErr{};
-public:
-	SystemError(const char *file, int line, DWORD err) noexcept
-		: Exception(file, line), mErr(err)
-	{}
-
-	explicit SystemError(DWORD err) noexcept
-		: mErr(err)
-	{}
-
-	SystemError(const char *file, int line, SysErr err) noexcept 
-		: Exception(file, line), mErr(err)
-	{}
-
-	explicit SystemError(SysErr err) noexcept 
-		: mErr(err)
-	{}
-
-	~SystemError() = default;
-	SystemError(const SystemError &rhs) = default;
-
-	SysErr getError() const noexcept { return mErr; }
-
-	std::string formatMessage() const { return mErr.formatMessage(); }
-
-private:
-	// Nope.
-	SystemError &operator=(const SystemError &) = delete;
-};
-
-class HResultError : public Exception
-{
-	HRESULT mHResult;
-public:
-	HResultError(HRESULT hr) noexcept : mHResult(hr) {}
-
-	HResultError(const char *file, int line, HRESULT hr) noexcept
-		: Exception(file, line), mHResult(hr)
-	{}
-
-	HResultError(const HResultError &rhs)
-		: Exception(rhs), mHResult(rhs.mHResult)
-	{}
-
-	~HResultError() = default;
-
-	HRESULT getResult() const { return mHResult; }
-
-private:
-	HResultError &operator=(const HResultError &) = delete;
-};
 
 class Guid
 {
@@ -698,5 +640,13 @@ public:
 };
 
 std::string lookupAccount(PSID pSid);
+
+// Retrieves the system provided message for the given error code.
+// The error code can be a system defined HRESULT or system error code from
+// GetLastError. 
+// Does not throw.
+// \param [in] errorCode
+// \return Error message or empty string if no message if found. 
+std::string formatMessage(uint32_t errorCode);
 
 } // namespace Windows

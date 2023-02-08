@@ -468,7 +468,7 @@ void EventLogQueryImpl::enqueueVoidReturnAndWait(RefPtr<IMethod<EventLogQueryImp
 		break;
 	case WaitStatus::Timeout:
 		// This is the failsafe timeout. It's NOT expected so we throw.
-		THROW_(SystemError, ERROR_TIMEOUT);
+		THROW_(SystemException, ERROR_TIMEOUT);
 
 	case WaitStatus::Failed:
 		result.throwError(); // Does not return
@@ -529,7 +529,7 @@ Ref<IQueryBatchResult> EventLogQueryImpl::getNextBatch(uint32_t batchSize, uint3
 
 		break; // Never get here.
 	case WaitStatus::Timeout: // Failsafe timeout. Not expected.
-		THROW_(SystemError, ERROR_TIMEOUT);
+		THROW_(SystemException, ERROR_TIMEOUT);
 
 	case WaitStatus::Failed:
 		result.throwError(); // Does not return
@@ -614,7 +614,7 @@ void EventLogQueryImpl::execQueryChannelXPath(const std::string &channel, const 
 		SysErr err = execClose();
 		if (err.failed()) 
 		{
-			THROW_(SystemError, err.getCode());
+			THROW_(SystemException, err.getCode());
 		}
 	}
 	uint32_t flags = EvtQueryChannelPath | 
@@ -630,7 +630,7 @@ void EventLogQueryImpl::execQueryFileXPath(const std::string &filePath, const st
 		SysErr err = execClose();
 		if (err.failed()) 
 		{
-			THROW_(SystemError, err.getCode());
+			THROW_(SystemException, err.getCode());
 		}
 	}
 
@@ -647,7 +647,7 @@ void EventLogQueryImpl::execQueryStructuredXML(const std::string &structuredXML,
 		SysErr err = execClose();
 		if (err.failed()) 
 		{
-			THROW_(SystemError, err.getCode());
+			THROW_(SystemException, err.getCode());
 		}
 	}
 	uint32_t flags = (dir == Direction::Forward ? EvtQueryForwardDirection : EvtQueryReverseDirection);

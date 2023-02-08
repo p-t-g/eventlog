@@ -23,8 +23,11 @@
 #pragma once
 
 #include <exception>
+#include <string>
+#include <type_traits>
 
-// throw exception EX 
+// Throws exception EX.
+// Unfortunately, it's the only way to capture file and line.
 #define THROW(EX) throw EX (__FILE__, __LINE__)
 #define THROW_(EX, ...) throw EX (__FILE__, __LINE__, __VA_ARGS__)
 
@@ -35,24 +38,32 @@ namespace Windows
 class Exception : public std::exception 
 {
 public:
-	const char *getThrowFile() const;
-	int getThrowLine() const;
+
+	// Returns the file at the throw location.
+	// \return File of the throw location. nullptr if not set.
+	const char * getFile() const { return mFile; }
+
+	// Returns the file line at the throw location.
+	// \return File line at the throw location. Zero if not set.
+	int getLine() const { return mLine; }
 
 protected:
-	// No changing what it points to, or the pointer! 
 	const char *const mFile = nullptr;
 	int mLine = 0;
 
 	Exception() = default;
 	
-	Exception(const char *file, int line) noexcept;
+	// \param [in] file
+	// File path at the throw location. Intended to be used with __FILE__ macro.
+	// \param [in] line
+	// File line at the throw location. Intendede to be used with the __LINE__ macro.
+	Exception(const char *const file, int line) noexcept;
 	
 	~Exception() = default;
 	
 	Exception(const Exception &rhs) = default;
 
 private:
-	// Nope. 
 	Exception &operator=(const Exception &) = delete;
 };
 
@@ -63,9 +74,7 @@ class InvalidStateException : public Exception
 {
 public:
 	InvalidStateException() = default;
-
-	InvalidStateException(const char *file, int line);
-
+	InvalidStateException(const char *const file, int line);
 	InvalidStateException(const InvalidStateException &rhs) = default;
 
 private:
@@ -77,14 +86,11 @@ class InvalidArgumentException : public Exception
 {
 public:
 	InvalidArgumentException() = default;
-
-	InvalidArgumentException(const char *file, int line);
-
+	InvalidArgumentException(const char *const file, int line);
 	InvalidArgumentException(const InvalidArgumentException &rhs) = default;
 
 private:
 	InvalidArgumentException &operator=(const InvalidArgumentException &) = delete;
-
 };
 
 // Thrown when an index is out of bounds.
@@ -92,9 +98,7 @@ class IndexOutOfBoundsException : public Exception
 {
 public:
 	IndexOutOfBoundsException() = default;
-
-	IndexOutOfBoundsException(const char *file, int line);
-
+	IndexOutOfBoundsException(const char *const file, int line);
 	IndexOutOfBoundsException(const IndexOutOfBoundsException &rhs) = default;
 
 private:
@@ -106,13 +110,39 @@ class InvalidDataTypeException : public Exception
 {
 public:
 	InvalidDataTypeException() = default;
-
-	InvalidDataTypeException(const char *file, int line);
-
+	InvalidDataTypeException(const char * const file, int line);
 	InvalidDataTypeException(const InvalidDataTypeException &rhs) = default;
 
 private:
 	InvalidDataTypeException &operator=(const InvalidDataTypeException &) = delete;
+};
+
+
+class SystemException : public Exception
+{
+public:
+	SystemException() = default;
+	
+	template<typename U>
+	explicit SystemException(U errorCode) 
+		: mErrorCode(uint32_t(errorCode))
+	{}
+
+	template<typename U>
+	SystemException(const char *const file, int line, U errorCode)
+		: Exception(file, line)
+		, mErrorCode(uint32_t(errorCode))
+	{}
+
+	~SystemException() = default;
+	std::string formatMessage() const;
+	uint32_t getErrorCode() const { return mErrorCode; }
+
+private:
+	uint32_t mErrorCode = 0;
+
+private:
+	SystemException &operator=(const SystemException &) = delete;
 };
 
 }
